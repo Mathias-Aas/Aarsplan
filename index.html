@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Årsplan</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f0f2f7;
+    padding: 24px;
+    color: #1a1a2e;
+    min-width: 900px;
+  }
+  header { margin-bottom: 16px; display: flex; align-items: center; gap: 16px; }
+  h1 { font-size: 20px; font-weight: 700; }
+  .subtitle { font-size: 12px; color: #888; margin-top: 2px; }
+
+  /* Sync indicator */
+  #syncStatus {
+    margin-left: auto; font-size: 11px; font-weight: 600;
+    padding: 5px 12px; border-radius: 20px; transition: all 0.3s;
+  }
+  #syncStatus.synced  { background: #d1fae5; color: #065f46; }
+  #syncStatus.saving  { background: #fef3c7; color: #92400e; }
+  #syncStatus.offline { background: #fee2e2; color: #991b1b; }
+  #syncStatus.loading { background: #e0e7ff; color: #3730a3; }
+
+  .toolbar {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .toolbar button {
+    padding: 7px 14px; border-radius: 8px; border: none;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-add   { background: #6366f1; color: #fff; }
+  .btn-add:hover { background: #4f46e5; }
+  .btn-reset { background: #fff; color: #666; border: 1px solid #ccc; }
+  .btn-reset:hover { background: #f5f5f5; }
+  .hint { font-size: 11px; color: #aaa; }
+
+  .year-block { margin-bottom: 28px; }
+  .year-header {
+    font-size: 12px; font-weight: 700; color: #666;
+    text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px;
+  }
+
+  .plan-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+  .plan-table th {
+    font-size: 10px; font-weight: 600; color: #aaa;
+    text-transform: uppercase; text-align: center; padding: 0 0 6px 0;
+  }
+  .plan-table th.label-col { width: 130px; text-align: left; }
+
+  .company-row td { padding: 2px 2px; vertical-align: middle; }
+  .company-row td.label-cell { padding-right: 8px; min-width: 130px; max-width: 130px; }
+  .company-name { display: flex; align-items: center; gap: 6px; }
+  .color-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .company-name span {
+    font-size: 11px; font-weight: 700; color: #333;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 90px; cursor: pointer;
+  }
+  .company-name span:hover { text-decoration: underline; }
+  .del-btn {
+    margin-left: auto; background: none; border: none;
+    color: #ccc; font-size: 14px; cursor: pointer; line-height: 1; padding: 0 2px; flex-shrink: 0;
+  }
+  .del-btn:hover { color: #ef4444; }
+
+  .month-cell {
+    min-height: 40px; border-radius: 6px; background: #e4e7ee;
+    cursor: pointer; transition: transform 0.1s, box-shadow 0.1s;
+    position: relative; min-width: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 3px 4px;
+  }
+  .month-cell.has-note { justify-content: flex-start; padding-top: 5px; }
+  .month-cell:hover { transform: scale(1.05); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+  .month-cell.drag-over { outline: 2px dashed #6366f1; outline-offset: 2px; }
+  .month-cell.has-type { cursor: grab; color: #fff; }
+  .month-cell.has-type:active { cursor: grabbing; }
+  .cell-label { font-size: 8px; font-weight: 700; line-height: 1.2; text-align: center; }
+  .cell-date  { font-size: 10px; font-weight: 800; margin-top: 1px; opacity: 0.95; }
+  .cell-note  {
+    font-size: 7.5px; font-weight: 500; line-height: 1.3;
+    opacity: 0.88; margin-top: 3px; text-align: center;
+    overflow: hidden; display: -webkit-box;
+    -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    word-break: break-word; width: 100%;
+  }
+
+  hr { border: none; border-top: 2px dashed #d0d4de; margin: 20px 0; }
+
+  .detail-panel {
+    display: none; position: fixed; right: 0; top: 0; bottom: 0;
+    width: 300px; background: #fff;
+    box-shadow: -4px 0 24px rgba(0,0,0,0.13);
+    z-index: 9999; padding: 24px 20px 20px;
+    overflow-y: auto; border-left: 1px solid #e8eaf0;
+    flex-direction: column; gap: 18px;
+  }
+  .detail-panel.visible { display: flex; }
+  .panel-header { display: flex; align-items: center; justify-content: space-between; }
+  .panel-header h3 { font-size: 15px; font-weight: 700; }
+  .panel-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #aaa; }
+  .panel-close:hover { color: #333; }
+  .panel-context {
+    font-size: 11px; color: #777; background: #f5f6fa;
+    border-radius: 8px; padding: 9px 11px; line-height: 1.7;
+  }
+  .panel-section { display: flex; flex-direction: column; gap: 7px; }
+  .panel-section > label {
+    font-size: 10px; font-weight: 700; color: #888;
+    text-transform: uppercase; letter-spacing: 0.6px;
+  }
+  .type-btns { display: flex; flex-direction: column; gap: 5px; }
+  .type-btn {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: 9px; border: 2px solid transparent;
+    cursor: pointer; font-size: 12px; font-weight: 600; color: #333;
+    background: #f5f6fa; transition: all 0.12s;
+  }
+  .type-btn:hover { background: #eeeffe; }
+  .type-btn.selected { border-color: #6366f1; background: #eeeffe; }
+  .tbdot { width: 13px; height: 13px; border-radius: 3px; flex-shrink: 0; }
+  .tbdot-empty { background: #e4e7ee; border: 1px solid #ccc; }
+
+  .color-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; background: #f5f6fa; border-radius: 9px;
+  }
+  .color-row-dot { width: 18px; height: 18px; border-radius: 4px; flex-shrink: 0; }
+  .color-row span { font-size: 11px; font-weight: 600; color: #555; flex: 1; }
+  .color-row input[type=color] {
+    width: 34px; height: 28px; border: 1px solid #dde; border-radius: 6px;
+    cursor: pointer; padding: 1px 2px; background: #fff;
+  }
+  .date-wrap input[type=date], .date-wrap input[type=time] {
+    width: 100%; padding: 9px 10px; border-radius: 9px;
+    border: 1px solid #dde; font-size: 13px; outline: none;
+    color: #333; background: #fafbff;
+  }
+  .date-wrap input:focus { border-color: #6366f1; }
+  .date-hint { font-size: 10px; color: #c0c4d0; margin-top: 3px; }
+  .note-input {
+    width: 100%; padding: 8px 10px; border-radius: 9px;
+    border: 1px solid #dde; font-size: 12px; outline: none;
+    color: #333; background: #fafbff; resize: vertical; min-height: 60px;
+    font-family: inherit;
+  }
+  .note-input:focus { border-color: #6366f1; }
+  .panel-actions { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
+  .panel-save {
+    padding: 11px; border-radius: 10px; border: none;
+    background: #6366f1; color: #fff; font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .panel-save:hover { background: #4f46e5; }
+  .panel-delete {
+    padding: 8px; border-radius: 10px; border: 1px solid #fca5a5;
+    background: #fff5f5; color: #ef4444; font-size: 12px; font-weight: 600;
+    cursor: pointer;
+  }
+  .panel-delete:hover { background: #fee2e2; }
+
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.3); z-index: 10000;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.visible { display: flex; }
+  .modal {
+    background: #fff; border-radius: 16px; padding: 24px; min-width: 320px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+  }
+  .modal h2 { font-size: 16px; margin-bottom: 16px; }
+  .modal label { font-size: 12px; font-weight: 600; color: #555; display: block; margin-bottom: 4px; }
+  .modal input[type=text] {
+    width: 100%; padding: 8px 10px; border-radius: 8px;
+    border: 1px solid #dde; font-size: 13px; margin-bottom: 14px; outline: none;
+  }
+  .modal input[type=text]:focus { border-color: #6366f1; }
+  .color-picks { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .color-pick {
+    width: 24px; height: 24px; border-radius: 50%;
+    cursor: pointer; border: 2px solid transparent; transition: border-color 0.15s;
+  }
+  .color-pick.selected { border-color: #1a1a2e; }
+  .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+  .modal-btns button {
+    padding: 7px 16px; border-radius: 8px; border: none;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+  .btn-cancel  { background: #f0f2f8; color: #555; }
+  .btn-confirm { background: #6366f1; color: #fff; }
+
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 20px; }
+  .li { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #555; }
+  .ld { width: 13px; height: 13px; border-radius: 3px; flex-shrink: 0; }
+  .footnote { font-size: 10px; color: #bbb; margin-top: 10px; font-style: italic; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>📅 Årsplan</h1>
+    <p class="subtitle">Bevægelighedskonsultationer & oplæg</p>
+  </div>
+  <div id="syncStatus" class="loading">⏳ Indlæser…</div>
+</header>
+
+<div class="toolbar">
+  <button class="btn-add" onclick="showAddModal()">+ Tilføj virksomhed</button>
+  <button class="btn-reset" onclick="resetData()">↺ Nulstil</button>
+  <span class="hint">✏️ Klik en celle for at redigere &nbsp;•&nbsp; Træk en blok for at flytte den</span>
+</div>
+
+<div id="plan"></div>
+
+<div class="legend">
+  <div class="li"><div class="ld" style="background:#6366f1"></div> Bevægeligheds-konsultation</div>
+  <div class="li"><div class="ld" style="background:#f59e0b"></div> Oplæg</div>
+  <div class="li"><div class="ld" style="background:#e4e7ee;border:1px solid #ccc"></div> Ingen aktivitet</div>
+</div>
+<p class="footnote">* Alle ændringer synkroniseres automatisk til alle der har linket.</p>
+
+<!-- DETAIL PANEL -->
+<div class="detail-panel" id="detailPanel">
+  <div class="panel-header">
+    <h3 id="panelTitle">Rediger</h3>
+    <button class="panel-close" onclick="closePanel()">✕</button>
+  </div>
+  <div class="panel-context" id="panelContext"></div>
+
+  <div class="panel-section">
+    <label>Aktivitet</label>
+    <div class="type-btns">
+      <div class="type-btn" id="tbBev" onclick="selectType('bev')">
+        <div class="tbdot" id="dotBev"></div> Bevægeligheds-konsultation
+      </div>
+      <div class="type-btn" id="tbOp" onclick="selectType('op')">
+        <div class="tbdot" id="dotOp"></div> Oplæg
+      </div>
+      <div class="type-btn" id="tbEmpty" onclick="selectType('')">
+        <div class="tbdot tbdot-empty"></div> Tom (ingen aktivitet)
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-section" id="colorSection">
+    <label>Farver</label>
+    <div class="color-row">
+      <div class="color-row-dot" id="previewBev"></div>
+      <span>Bev. konsultation</span>
+      <input type="color" id="colorPickBev">
+    </div>
+    <div class="color-row">
+      <div class="color-row-dot" id="previewOp"></div>
+      <span>Oplæg</span>
+      <input type="color" id="colorPickOp">
+    </div>
+  </div>
+
+  <div class="panel-section" id="dateSection">
+    <label>Dato & klokkeslet</label>
+    <div class="date-wrap"><input type="date" id="panelDate"></div>
+    <div class="date-wrap" style="margin-top:6px;"><input type="time" id="panelTime"></div>
+    <div class="date-hint">Valgfrit — vises direkte i cellen</div>
+  </div>
+
+  <div class="panel-section">
+    <label>Note</label>
+    <textarea class="note-input" id="panelNote" placeholder="Tilføj en note…"></textarea>
+  </div>
+
+  <div class="panel-actions">
+    <button class="panel-save" onclick="savePanel()">Gem ændringer</button>
+    <button class="panel-delete" onclick="deleteEntry()">Ryd celle</button>
+  </div>
+</div>
+
+<!-- ADD COMPANY MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2>Tilføj virksomhed</h2>
+    <label>Navn</label>
+    <input type="text" id="newName" placeholder="fx Loop C" onkeydown="if(event.key==='Enter')confirmAdd()">
+    <label>Farve</label>
+    <div class="color-picks" id="colorPicks"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="hideModal()">Annuller</button>
+      <button class="btn-confirm" onclick="confirmAdd()">Tilføj</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+// ── Firebase config ──────────────────────────────────────────────
+const firebaseConfig = {
+  databaseURL: "https://aarsplan-171dd-default-rtdb.europe-west1.firebasedatabase.app"
+};
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+const planRef = ref(db, 'plan');
+
+// ── Constants ────────────────────────────────────────────────────
+const MONTHS    = ['Jan','Feb','Mar','Apr','Maj','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
+const MONTHS_DK = ['januar','februar','marts','april','maj','juni','juli','august','september','oktober','november','december'];
+const COLORS    = ['#6366f1','#3b82f6','#10b981','#f59e0b','#ef4444','#ec4899','#8b5cf6','#14b8a6','#f97316','#64748b','#a78bfa','#34d399'];
+const TYPE_SHORT = { bev: 'Bev. konsult.', op: 'Oplæg', '': '' };
+
+function makeRow(len, active) {
+  return Array(len).fill(null).map((_, i) => ({ type: active[i] || '', date: '', time: '', note: '' }));
+}
+
+const DEFAULT_DATA = {
+  companies: [
+    { id: 'loopn', name: 'Loop N', color: '#6366f1', colorBev: '#6366f1', colorOp: '#f59e0b' },
+    { id: 'loops', name: 'Loop S', color: '#10b981', colorBev: '#10b981', colorOp: '#f59e0b' }
+  ],
+  plan: {
+    2026: {
+      loopn: makeRow(12, { 5: 'bev', 8: 'op' }),
+      loops: makeRow(12, { 7: 'bev' })
+    },
+    2027: {
+      loopn: makeRow(12, { 1:'bev', 4:'bev', 7:'bev', 10:'bev' }),
+      loops: makeRow(12, { 0:'bev', 3:'bev', 6:'bev', 9:'bev' })
+    }
+  }
+};
+
+// ── State ────────────────────────────────────────────────────────
+let state     = JSON.parse(JSON.stringify(DEFAULT_DATA));
+let dragSrc   = null;
+let panelCtx  = null;
+let panelType = '';
+let isSyncing = false; // prevent echo when we wrote the change
+
+function setSyncStatus(s) {
+  const el = document.getElementById('syncStatus');
+  el.className = s;
+  el.textContent = s === 'synced' ? '✅ Synkroniseret' :
+                   s === 'saving' ? '💾 Gemmer…' :
+                   s === 'offline'? '❌ Offline' :
+                                    '⏳ Indlæser…';
+}
+
+// ── Firebase sync ────────────────────────────────────────────────
+// Listen for remote changes
+onValue(planRef, snapshot => {
+  if (isSyncing) return; // skip echo from our own write
+  const data = snapshot.val();
+  if (data) {
+    state = data;
+    ensureRows();
+  } else {
+    // First time — push defaults
+    saveToFirebase();
+  }
+  setSyncStatus('synced');
+  render();
+});
+
+function saveToFirebase() {
+  isSyncing = true;
+  setSyncStatus('saving');
+  set(planRef, state)
+    .then(() => { setSyncStatus('synced'); })
+    .catch(() => { setSyncStatus('offline'); })
+    .finally(() => { setTimeout(() => { isSyncing = false; }, 300); });
+}
+
+function resetData() {
+  if (!confirm('Nulstil planen til standard? Dette påvirker alle der har linket.')) return;
+  state = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  saveToFirebase();
+  render();
+}
+
+// ── Helpers ──────────────────────────────────────────────────────
+function ensureRows() {
+  [2026, 2027].forEach(y => {
+    if (!state.plan[y]) state.plan[y] = {};
+    state.companies.forEach(c => {
+      if (!state.plan[y][c.id]) state.plan[y][c.id] = makeRow(12, {});
+      if (!c.colorBev) c.colorBev = c.color;
+      if (!c.colorOp)  c.colorOp  = '#f59e0b';
+    });
+  });
+}
+
+function getEntry(year, cid, mi) {
+  const e = state.plan[year]?.[cid]?.[mi];
+  if (!e) return { type:'', date:'', time:'', note:'' };
+  if (typeof e === 'string') return { type: e, date:'', time:'', note:'' };
+  return { type: e.type||'', date: e.date||'', time: e.time||'', note: e.note||'' };
+}
+
+function getCompany(id) { return state.companies.find(c => c.id === id); }
+
+function formatDateShort(d) {
+  if (!d) return '';
+  const dt = new Date(d + 'T00:00:00');
+  return dt.getDate() + '/' + (dt.getMonth() + 1);
+}
+
+// ── Render ───────────────────────────────────────────────────────
+function render() {
+  ensureRows();
+  const container = document.getElementById('plan');
+  container.innerHTML = '';
+
+  [2026, 2027].forEach((year, yi) => {
+    if (yi > 0) { const hr = document.createElement('hr'); container.appendChild(hr); }
+
+    const block = document.createElement('div');
+    block.className = 'year-block';
+    const yh = document.createElement('div');
+    yh.className = 'year-header';
+    yh.textContent = year === 2027 ? '2027 — Rullende besøg' : '2026';
+    block.appendChild(yh);
+
+    const table = document.createElement('table');
+    table.className = 'plan-table';
+    const thead = document.createElement('thead');
+    let thHTML = '<tr><th class="label-col"></th>';
+    MONTHS.forEach(m => { thHTML += `<th>${m}</th>`; });
+    thHTML += '</tr>';
+    thead.innerHTML = thHTML;
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    state.companies.forEach(company => {
+      const tr = document.createElement('tr');
+      tr.className = 'company-row';
+
+      const tdLabel = document.createElement('td');
+      tdLabel.className = 'label-cell';
+      tdLabel.innerHTML = `
+        <div class="company-name">
+          <div class="color-dot" style="background:${company.colorBev||company.color}"></div>
+          <span title="Klik for at omdøbe" onclick="window._renameCompany('${company.id}')">${company.name}</span>
+          <button class="del-btn" onclick="window._deleteCompany('${company.id}')">×</button>
+        </div>`;
+      tr.appendChild(tdLabel);
+
+      for (let mi = 0; mi < 12; mi++) {
+        const entry = getEntry(year, company.id, mi);
+        const td = document.createElement('td');
+        const cell = document.createElement('div');
+        cell.className = 'month-cell' + (entry.type ? ' has-type' : '') + (entry.note ? ' has-note' : '');
+        cell.dataset.type    = entry.type;
+        cell.dataset.company = company.id;
+        cell.dataset.year    = year;
+        cell.dataset.month   = mi;
+
+        if (entry.type) {
+          const col = entry.type === 'bev'
+            ? (company.colorBev || company.color)
+            : (company.colorOp  || '#f59e0b');
+          cell.style.background = `linear-gradient(135deg, ${col}99, ${col})`;
+
+          const lbl = document.createElement('div');
+          lbl.className = 'cell-label';
+          lbl.textContent = TYPE_SHORT[entry.type];
+          cell.appendChild(lbl);
+
+          if (entry.date || entry.time) {
+            const dt = document.createElement('div');
+            dt.className = 'cell-date';
+            dt.textContent = [entry.date ? formatDateShort(entry.date) : '', entry.time || ''].filter(Boolean).join(' ');
+            cell.appendChild(dt);
+          }
+
+          if (entry.note) {
+            const noteEl = document.createElement('div');
+            noteEl.className = 'cell-note';
+            noteEl.textContent = entry.note;
+            cell.appendChild(noteEl);
+          }
+
+          cell.draggable = true;
+          cell.addEventListener('dragstart', onDragStart);
+        }
+
+        if (entry.note) cell.title = entry.note;
+        cell.addEventListener('click', openPanel);
+        cell.addEventListener('dragover',  onDragOver);
+        cell.addEventListener('dragleave', onDragLeave);
+        cell.addEventListener('drop',      onDrop);
+        td.appendChild(cell);
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    });
+
+    table.appendChild(tbody);
+    block.appendChild(table);
+    container.appendChild(block);
+  });
+}
+
+// ── Detail panel ─────────────────────────────────────────────────
+function openPanel(e) {
+  const cell    = e.currentTarget;
+  const year    = parseInt(cell.dataset.year);
+  const cid     = cell.dataset.company;
+  const mi      = parseInt(cell.dataset.month);
+  const company = getCompany(cid);
+  const entry   = getEntry(year, cid, mi);
+
+  panelCtx  = { year, cid, mi };
+  panelType = entry.type;
+
+  document.getElementById('panelTitle').textContent = company.name;
+  const mName = MONTHS_DK[mi].charAt(0).toUpperCase() + MONTHS_DK[mi].slice(1);
+  document.getElementById('panelContext').innerHTML =
+    `<strong>${mName} ${year}</strong><br>` +
+    (entry.type
+      ? 'Aktivitet: ' + (entry.type === 'bev' ? 'Bevægeligheds-konsultation' : 'Oplæg') +
+        (entry.date ? '<br>Dato: ' + formatDateShort(entry.date) : '')
+      : 'Ingen aktivitet sat endnu');
+
+  const pad = n => String(n).padStart(2, '0');
+  const lastDay = new Date(year, mi + 1, 0).getDate();
+  const di = document.getElementById('panelDate');
+  di.min   = `${year}-${pad(mi + 1)}-01`;
+  di.max   = `${year}-${pad(mi + 1)}-${pad(lastDay)}`;
+  di.value = entry.date || '';
+  document.getElementById('panelTime').value = entry.time || '';
+  document.getElementById('panelNote').value = entry.note || '';
+
+  const bevCol = company.colorBev || company.color;
+  const opCol  = company.colorOp  || '#f59e0b';
+  document.getElementById('colorPickBev').value          = bevCol;
+  document.getElementById('colorPickOp').value           = opCol;
+  document.getElementById('previewBev').style.background = bevCol;
+  document.getElementById('previewOp').style.background  = opCol;
+
+  updateTypeButtons(entry.type);
+  document.getElementById('detailPanel').classList.add('visible');
+  e.stopPropagation();
+}
+
+function updateTypeButtons(type) {
+  panelType = type;
+  document.getElementById('tbBev').classList.toggle('selected',   type === 'bev');
+  document.getElementById('tbOp').classList.toggle('selected',    type === 'op');
+  document.getElementById('tbEmpty').classList.toggle('selected', type === '');
+  document.getElementById('dotBev').style.background = document.getElementById('colorPickBev').value;
+  document.getElementById('dotOp').style.background  = document.getElementById('colorPickOp').value;
+  const ds = document.getElementById('dateSection');
+  ds.style.opacity       = type ? '1' : '0.35';
+  ds.style.pointerEvents = type ? '' : 'none';
+}
+
+window._selectType = function(type) { updateTypeButtons(type); };
+
+function savePanel() {
+  if (!panelCtx) return;
+  const { year, cid, mi } = panelCtx;
+  state.plan[year][cid][mi] = {
+    type: panelType,
+    date: panelType ? document.getElementById('panelDate').value : '',
+    time: panelType ? document.getElementById('panelTime').value : '',
+    note: document.getElementById('panelNote').value.trim()
+  };
+  const comp = getCompany(cid);
+  if (comp) {
+    comp.colorBev = document.getElementById('colorPickBev').value;
+    comp.colorOp  = document.getElementById('colorPickOp').value;
+    comp.color    = comp.colorBev;
+  }
+  saveToFirebase();
+  render();
+  closePanel();
+}
+
+function deleteEntry() {
+  if (!panelCtx) return;
+  const { year, cid, mi } = panelCtx;
+  state.plan[year][cid][mi] = { type:'', date:'', time:'', note:'' };
+  saveToFirebase();
+  render();
+  closePanel();
+}
+
+function closePanel() {
+  document.getElementById('detailPanel').classList.remove('visible');
+  panelCtx = null;
+}
+
+document.addEventListener('click', e => {
+  const panel = document.getElementById('detailPanel');
+  if (panel.classList.contains('visible') && !panel.contains(e.target)) closePanel();
+});
+document.getElementById('detailPanel').addEventListener('click', e => e.stopPropagation());
+
+document.getElementById('colorPickBev').addEventListener('input', e => {
+  document.getElementById('previewBev').style.background = e.target.value;
+  document.getElementById('dotBev').style.background     = e.target.value;
+});
+document.getElementById('colorPickOp').addEventListener('input', e => {
+  document.getElementById('previewOp').style.background = e.target.value;
+  document.getElementById('dotOp').style.background     = e.target.value;
+});
+
+// ── Drag & drop ──────────────────────────────────────────────────
+function onDragStart(e) {
+  const c = e.currentTarget;
+  dragSrc = { company: c.dataset.company, year: parseInt(c.dataset.year), month: parseInt(c.dataset.month) };
+  e.dataTransfer.effectAllowed = 'move';
+}
+function onDragOver(e)  { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function onDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function onDrop(e) {
+  e.preventDefault(); e.stopPropagation();
+  e.currentTarget.classList.remove('drag-over');
+  if (!dragSrc) return;
+  const t = e.currentTarget;
+  const tY = parseInt(t.dataset.year);
+  if (dragSrc.year !== tY) { dragSrc = null; return; }
+  const src = JSON.parse(JSON.stringify(getEntry(dragSrc.year, dragSrc.company, dragSrc.month)));
+  const tgt = JSON.parse(JSON.stringify(getEntry(tY, t.dataset.company, parseInt(t.dataset.month))));
+  state.plan[dragSrc.year][dragSrc.company][dragSrc.month] = tgt;
+  state.plan[tY][t.dataset.company][parseInt(t.dataset.month)] = src;
+  dragSrc = null;
+  saveToFirebase();
+  render();
+}
+
+// ── Company management ───────────────────────────────────────────
+let selectedColor = COLORS[0];
+
+window._showAddModal = function() {
+  const picks = document.getElementById('colorPicks');
+  picks.innerHTML = '';
+  const used = state.companies.map(c => c.color);
+  selectedColor = COLORS.find(c => !used.includes(c)) || COLORS[0];
+  COLORS.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'color-pick' + (c === selectedColor ? ' selected' : '');
+    div.style.background = c;
+    div.onclick = () => {
+      selectedColor = c;
+      document.querySelectorAll('.color-pick').forEach(el => el.classList.remove('selected'));
+      div.classList.add('selected');
+    };
+    picks.appendChild(div);
+  });
+  document.getElementById('newName').value = '';
+  document.getElementById('modal').classList.add('visible');
+  setTimeout(() => document.getElementById('newName').focus(), 100);
+};
+
+window._hideModal    = function() { document.getElementById('modal').classList.remove('visible'); };
+window._confirmAdd   = function() {
+  const name = document.getElementById('newName').value.trim();
+  if (!name) { document.getElementById('newName').focus(); return; }
+  const id = 'c_' + Date.now();
+  state.companies.push({ id, name, color: selectedColor, colorBev: selectedColor, colorOp: '#f59e0b' });
+  ensureRows(); saveToFirebase(); render();
+  window._hideModal();
+};
+window._deleteCompany = function(id) {
+  if (state.companies.length <= 1) { alert('Du skal have mindst én virksomhed.'); return; }
+  const c = getCompany(id);
+  if (!confirm(`Fjern "${c.name}" fra planen?`)) return;
+  state.companies = state.companies.filter(x => x.id !== id);
+  saveToFirebase(); render();
+};
+window._renameCompany = function(id) {
+  const c = getCompany(id);
+  const n = prompt('Nyt navn:', c.name);
+  if (n && n.trim()) { c.name = n.trim(); saveToFirebase(); render(); }
+};
+
+// Expose functions called from HTML attributes
+window.showAddModal = window._showAddModal;
+window.hideModal    = window._hideModal;
+window.confirmAdd   = window._confirmAdd;
+window.resetData    = resetData;
+window.savePanel    = savePanel;
+window.deleteEntry  = deleteEntry;
+window.closePanel   = closePanel;
+window.selectType   = window._selectType;
+
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal')) window._hideModal();
+});
+
+</script>
+</body>
+</html>
