@@ -367,7 +367,7 @@ const DEFAULT_DATA = {
     { id:'loops', name:'Loop S', color:'#10b981' }
   ],
   years: [2026, 2027],
-  activityTypes: [],   // custom types added by user
+  activityTypes: [],
   plan: {
     2026: {
       loopn: makeRow(12, {5:'bev', 8:'op'}),
@@ -378,8 +378,11 @@ const DEFAULT_DATA = {
       loops: makeRow(12, {0:'bev',3:'bev',6:'bev',9:'bev'})
     }
   },
-  // Per-company color overrides per activity type: companyColors[companyId][typeId] = color
-  companyColors: {}
+  // Per-company color overrides: companyColors[companyId][typeId] = color
+  companyColors: {
+    loopn: { bev: '#6366f1', op: '#f59e0b' },
+    loops: { bev: '#10b981', op: '#f59e0b' }
+  }
 };
 
 // ── State ────────────────────────────────────────────────────────
@@ -423,6 +426,20 @@ function migrateState() {
   if (!state.years)         state.years = [2026,2027];
   if (!state.activityTypes) state.activityTypes = [];
   if (!state.companyColors) state.companyColors = {};
+
+  // Ensure every company has a color entry for every activity type
+  state.companies.forEach(c => {
+    if (!state.companyColors[c.id]) state.companyColors[c.id] = {};
+    allTypes().forEach(t => {
+      if (!state.companyColors[c.id][t.id]) {
+        // Use the company's own color for 'bev', default type color for others
+        state.companyColors[c.id][t.id] = (t.id === 'bev')
+          ? (c.color || t.color)
+          : t.color;
+      }
+    });
+  });
+
   state.years.forEach(y => {
     if (!state.plan[y]) state.plan[y] = {};
     state.companies.forEach(c => {
@@ -749,6 +766,12 @@ window.confirmAddCompany = function() {
   if (!name) { document.getElementById('newCompanyName').focus(); return; }
   const id='c_'+Date.now();
   state.companies.push({id,name,color:selectedCompanyColor});
+  // Initialize colors for this new company: use selectedCompanyColor for bev, defaults for rest
+  if (!state.companyColors) state.companyColors = {};
+  state.companyColors[id] = {};
+  allTypes().forEach(t => {
+    state.companyColors[id][t.id] = (t.id === 'bev') ? selectedCompanyColor : t.color;
+  });
   migrateState(); saveToFirebase(); render(); hideModal('modalCompany');
 };
 window._deleteCompany = function(id) {
