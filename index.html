@@ -8,45 +8,48 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: 'Segoe UI', sans-serif;
-    background: #f0f2f7;
-    padding: 24px;
-    color: #1a1a2e;
-    min-width: 900px;
+    background: #f0f2f7; padding: 24px;
+    color: #1a1a2e; min-width: 900px;
   }
-  header { margin-bottom: 16px; display: flex; align-items: center; gap: 16px; }
-  h1 { font-size: 20px; font-weight: 700; }
-  .subtitle { font-size: 12px; color: #888; margin-top: 2px; }
-
-  /* Sync indicator */
+  header { margin-bottom: 16px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .header-left h1 { font-size: 20px; font-weight: 700; }
+  .header-left p  { font-size: 12px; color: #888; margin-top: 2px; }
   #syncStatus {
     margin-left: auto; font-size: 11px; font-weight: 600;
     padding: 5px 12px; border-radius: 20px; transition: all 0.3s;
   }
-  #syncStatus.synced  { background: #d1fae5; color: #065f46; }
-  #syncStatus.saving  { background: #fef3c7; color: #92400e; }
-  #syncStatus.offline { background: #fee2e2; color: #991b1b; }
-  #syncStatus.loading { background: #e0e7ff; color: #3730a3; }
+  #syncStatus.synced  { background:#d1fae5; color:#065f46; }
+  #syncStatus.saving  { background:#fef3c7; color:#92400e; }
+  #syncStatus.offline { background:#fee2e2; color:#991b1b; }
+  #syncStatus.loading { background:#e0e7ff; color:#3730a3; }
 
   .toolbar {
-    display: flex; align-items: center; gap: 10px;
+    display: flex; align-items: center; gap: 8px;
     margin-bottom: 20px; flex-wrap: wrap;
   }
   .toolbar button {
-    padding: 7px 14px; border-radius: 8px; border: none;
-    font-size: 12px; font-weight: 600; cursor: pointer;
-    transition: background 0.15s;
+    padding: 7px 13px; border-radius: 8px; border: none;
+    font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.15s;
   }
-  .btn-add   { background: #6366f1; color: #fff; }
-  .btn-add:hover { background: #4f46e5; }
-  .btn-reset { background: #fff; color: #666; border: 1px solid #ccc; }
-  .btn-reset:hover { background: #f5f5f5; }
-  .hint { font-size: 11px; color: #aaa; }
+  .btn-primary { background:#6366f1; color:#fff; }
+  .btn-primary:hover { background:#4f46e5; }
+  .btn-secondary { background:#fff; color:#555; border:1px solid #ccc; }
+  .btn-secondary:hover { background:#f5f5f5; }
+  .btn-green { background:#10b981; color:#fff; }
+  .btn-green:hover { background:#059669; }
+  .hint { font-size:11px; color:#aaa; margin-left:4px; }
 
   .year-block { margin-bottom: 28px; }
   .year-header {
-    font-size: 12px; font-weight: 700; color: #666;
-    text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px;
+    font-size: 12px; font-weight: 700; color: #555;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    margin-bottom: 10px; display: flex; align-items: center; gap: 10px;
   }
+  .del-year-btn {
+    background: none; border: none; color: #ddd; font-size: 13px;
+    cursor: pointer; padding: 0 3px; line-height: 1;
+  }
+  .del-year-btn:hover { color: #ef4444; }
 
   .plan-table { width: 100%; border-collapse: separate; border-spacing: 0; }
   .plan-table th {
@@ -86,22 +89,21 @@
   .cell-label { font-size: 8px; font-weight: 700; line-height: 1.2; text-align: center; }
   .cell-date  { font-size: 10px; font-weight: 800; margin-top: 1px; opacity: 0.95; }
   .cell-note  {
-    font-size: 7.5px; font-weight: 500; line-height: 1.3;
-    opacity: 0.88; margin-top: 3px; text-align: center;
-    overflow: hidden; display: -webkit-box;
-    -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    font-size: 7.5px; font-weight: 500; line-height: 1.3; opacity: 0.88;
+    margin-top: 3px; text-align: center; overflow: hidden;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
     word-break: break-word; width: 100%;
   }
-
   hr { border: none; border-top: 2px dashed #d0d4de; margin: 20px 0; }
 
+  /* ── DETAIL PANEL ── */
   .detail-panel {
     display: none; position: fixed; right: 0; top: 0; bottom: 0;
-    width: 300px; background: #fff;
+    width: 310px; background: #fff;
     box-shadow: -4px 0 24px rgba(0,0,0,0.13);
     z-index: 9999; padding: 24px 20px 20px;
     overflow-y: auto; border-left: 1px solid #e8eaf0;
-    flex-direction: column; gap: 18px;
+    flex-direction: column; gap: 16px;
   }
   .detail-panel.visible { display: flex; }
   .panel-header { display: flex; align-items: center; justify-content: space-between; }
@@ -117,12 +119,12 @@
     font-size: 10px; font-weight: 700; color: #888;
     text-transform: uppercase; letter-spacing: 0.6px;
   }
-  .type-btns { display: flex; flex-direction: column; gap: 5px; }
+  .type-btns { display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow-y: auto; }
   .type-btn {
     display: flex; align-items: center; gap: 10px;
-    padding: 9px 12px; border-radius: 9px; border: 2px solid transparent;
+    padding: 8px 12px; border-radius: 9px; border: 2px solid transparent;
     cursor: pointer; font-size: 12px; font-weight: 600; color: #333;
-    background: #f5f6fa; transition: all 0.12s;
+    background: #f5f6fa; transition: all 0.12s; flex-shrink: 0;
   }
   .type-btn:hover { background: #eeeffe; }
   .type-btn.selected { border-color: #6366f1; background: #eeeffe; }
@@ -162,28 +164,28 @@
   .panel-save:hover { background: #4f46e5; }
   .panel-delete {
     padding: 8px; border-radius: 10px; border: 1px solid #fca5a5;
-    background: #fff5f5; color: #ef4444; font-size: 12px; font-weight: 600;
-    cursor: pointer;
+    background: #fff5f5; color: #ef4444; font-size: 12px; font-weight: 600; cursor: pointer;
   }
   .panel-delete:hover { background: #fee2e2; }
 
+  /* ── MODALS ── */
   .modal-overlay {
     display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.3); z-index: 10000;
+    background: rgba(0,0,0,0.35); z-index: 10000;
     align-items: center; justify-content: center;
   }
   .modal-overlay.visible { display: flex; }
   .modal {
-    background: #fff; border-radius: 16px; padding: 24px; min-width: 320px;
+    background: #fff; border-radius: 16px; padding: 24px; min-width: 340px;
     box-shadow: 0 16px 48px rgba(0,0,0,0.2);
   }
   .modal h2 { font-size: 16px; margin-bottom: 16px; }
   .modal label { font-size: 12px; font-weight: 600; color: #555; display: block; margin-bottom: 4px; }
-  .modal input[type=text] {
+  .modal input[type=text], .modal input[type=number] {
     width: 100%; padding: 8px 10px; border-radius: 8px;
     border: 1px solid #dde; font-size: 13px; margin-bottom: 14px; outline: none;
   }
-  .modal input[type=text]:focus { border-color: #6366f1; }
+  .modal input:focus { border-color: #6366f1; }
   .color-picks { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
   .color-pick {
     width: 24px; height: 24px; border-radius: 50%;
@@ -198,7 +200,20 @@
   .btn-cancel  { background: #f0f2f8; color: #555; }
   .btn-confirm { background: #6366f1; color: #fff; }
 
-  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 20px; }
+  /* Activity type manager */
+  .act-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; max-height: 240px; overflow-y: auto; }
+  .act-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px; border-radius: 8px; background: #f5f6fa;
+  }
+  .act-dot { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+  .act-name { font-size: 12px; font-weight: 600; color: #333; flex: 1; }
+  .act-edit { background: none; border: none; font-size: 12px; color: #6366f1; cursor: pointer; font-weight: 600; }
+  .act-del  { background: none; border: none; font-size: 14px; color: #ccc; cursor: pointer; }
+  .act-del:hover { color: #ef4444; }
+  .act-builtin { font-size: 10px; color: #aaa; font-style: italic; }
+
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 20px; align-items: center; }
   .li { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #555; }
   .ld { width: 13px; height: 13px; border-radius: 3px; flex-shrink: 0; }
   .footnote { font-size: 10px; color: #bbb; margin-top: 10px; font-style: italic; }
@@ -207,26 +222,23 @@
 <body>
 
 <header>
-  <div>
+  <div class="header-left">
     <h1>📅 Årsplan</h1>
-    <p class="subtitle">Bevægelighedskonsultationer & oplæg</p>
+    <p>Bevægelighedskonsultationer & oplæg</p>
   </div>
   <div id="syncStatus" class="loading">⏳ Indlæser…</div>
 </header>
 
 <div class="toolbar">
-  <button class="btn-add" onclick="showAddModal()">+ Tilføj virksomhed</button>
-  <button class="btn-reset" onclick="resetData()">↺ Nulstil</button>
-  <span class="hint">✏️ Klik en celle for at redigere &nbsp;•&nbsp; Træk en blok for at flytte den</span>
+  <button class="btn-primary" onclick="showAddCompanyModal()">+ Virksomhed</button>
+  <button class="btn-green"   onclick="showAddYearModal()">+ År</button>
+  <button class="btn-secondary" onclick="showManageActivitiesModal()">⚙ Aktivitetstyper</button>
+  <button class="btn-secondary" onclick="resetData()">↺ Nulstil</button>
+  <span class="hint">✏️ Klik en celle for at redigere &nbsp;•&nbsp; Træk en blok for at flytte</span>
 </div>
 
 <div id="plan"></div>
-
-<div class="legend">
-  <div class="li"><div class="ld" style="background:#6366f1"></div> Bevægeligheds-konsultation</div>
-  <div class="li"><div class="ld" style="background:#f59e0b"></div> Oplæg</div>
-  <div class="li"><div class="ld" style="background:#e4e7ee;border:1px solid #ccc"></div> Ingen aktivitet</div>
-</div>
+<div id="legend" class="legend"></div>
 <p class="footnote">* Alle ændringer synkroniseres automatisk til alle der har linket.</p>
 
 <!-- DETAIL PANEL -->
@@ -239,31 +251,12 @@
 
   <div class="panel-section">
     <label>Aktivitet</label>
-    <div class="type-btns">
-      <div class="type-btn" id="tbBev" onclick="selectType('bev')">
-        <div class="tbdot" id="dotBev"></div> Bevægeligheds-konsultation
-      </div>
-      <div class="type-btn" id="tbOp" onclick="selectType('op')">
-        <div class="tbdot" id="dotOp"></div> Oplæg
-      </div>
-      <div class="type-btn" id="tbEmpty" onclick="selectType('')">
-        <div class="tbdot tbdot-empty"></div> Tom (ingen aktivitet)
-      </div>
-    </div>
+    <div class="type-btns" id="typeBtns"></div>
   </div>
 
   <div class="panel-section" id="colorSection">
-    <label>Farver</label>
-    <div class="color-row">
-      <div class="color-row-dot" id="previewBev"></div>
-      <span>Bev. konsultation</span>
-      <input type="color" id="colorPickBev">
-    </div>
-    <div class="color-row">
-      <div class="color-row-dot" id="previewOp"></div>
-      <span>Oplæg</span>
-      <input type="color" id="colorPickOp">
-    </div>
+    <label>Farver for denne virksomhed</label>
+    <div id="colorRows"></div>
   </div>
 
   <div class="panel-section" id="dateSection">
@@ -285,29 +278,70 @@
 </div>
 
 <!-- ADD COMPANY MODAL -->
-<div class="modal-overlay" id="modal">
+<div class="modal-overlay" id="modalCompany">
   <div class="modal">
     <h2>Tilføj virksomhed</h2>
     <label>Navn</label>
-    <input type="text" id="newName" placeholder="fx Loop C" onkeydown="if(event.key==='Enter')confirmAdd()">
-    <label>Farve</label>
-    <div class="color-picks" id="colorPicks"></div>
+    <input type="text" id="newCompanyName" placeholder="fx Loop C" onkeydown="if(event.key==='Enter')confirmAddCompany()">
+    <label>Standardfarve</label>
+    <div class="color-picks" id="companyColorPicks"></div>
     <div class="modal-btns">
-      <button class="btn-cancel" onclick="hideModal()">Annuller</button>
-      <button class="btn-confirm" onclick="confirmAdd()">Tilføj</button>
+      <button class="btn-cancel"  onclick="hideModal('modalCompany')">Annuller</button>
+      <button class="btn-confirm" onclick="confirmAddCompany()">Tilføj</button>
     </div>
   </div>
 </div>
 
-<!-- Firebase SDK -->
+<!-- ADD YEAR MODAL -->
+<div class="modal-overlay" id="modalYear">
+  <div class="modal">
+    <h2>Tilføj kalenderår</h2>
+    <label>År</label>
+    <input type="number" id="newYear" placeholder="fx 2028" min="2024" max="2040" onkeydown="if(event.key==='Enter')confirmAddYear()">
+    <div class="modal-btns">
+      <button class="btn-cancel"  onclick="hideModal('modalYear')">Annuller</button>
+      <button class="btn-confirm" onclick="confirmAddYear()">Tilføj</button>
+    </div>
+  </div>
+</div>
+
+<!-- MANAGE ACTIVITIES MODAL -->
+<div class="modal-overlay" id="modalActivities">
+  <div class="modal">
+    <h2>⚙ Aktivitetstyper</h2>
+    <div class="act-list" id="actList"></div>
+    <hr style="margin:12px 0;border:none;border-top:1px solid #eee;">
+    <label>Ny aktivitetstype</label>
+    <input type="text" id="newActName" placeholder="fx Introduktionsmøde" style="margin-bottom:8px;">
+    <label>Farve</label>
+    <div class="color-picks" id="actColorPicks"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel"  onclick="hideModal('modalActivities')">Luk</button>
+      <button class="btn-confirm" onclick="confirmAddActivity()">Tilføj type</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT ACTIVITY MODAL -->
+<div class="modal-overlay" id="modalEditAct">
+  <div class="modal">
+    <h2>Rediger aktivitetstype</h2>
+    <label>Navn</label>
+    <input type="text" id="editActName" placeholder="Navn">
+    <label>Farve</label>
+    <div class="color-picks" id="editActColorPicks"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel"  onclick="hideModal('modalEditAct')">Annuller</button>
+      <button class="btn-confirm" onclick="confirmEditActivity()">Gem</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { initializeApp }          from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-// ── Firebase config ──────────────────────────────────────────────
-const firebaseConfig = {
-  databaseURL: "https://aarsplan-171dd-default-rtdb.europe-west1.firebasedatabase.app"
-};
+const firebaseConfig = { databaseURL: "https://aarsplan-171dd-default-rtdb.europe-west1.firebasedatabase.app" };
 const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
 const planRef = ref(db, 'plan');
@@ -316,27 +350,36 @@ const planRef = ref(db, 'plan');
 const MONTHS    = ['Jan','Feb','Mar','Apr','Maj','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
 const MONTHS_DK = ['januar','februar','marts','april','maj','juni','juli','august','september','oktober','november','december'];
 const COLORS    = ['#6366f1','#3b82f6','#10b981','#f59e0b','#ef4444','#ec4899','#8b5cf6','#14b8a6','#f97316','#64748b','#a78bfa','#34d399'];
-const TYPE_SHORT = { bev: 'Bev. konsult.', op: 'Oplæg', '': '' };
+
+// Built-in activity types (always present, not deletable)
+const BUILTIN_TYPES = [
+  { id: 'bev', name: 'Bev. konsultation',  color: '#6366f1', builtin: true },
+  { id: 'op',  name: 'Oplæg',              color: '#f59e0b', builtin: true }
+];
 
 function makeRow(len, active) {
-  return Array(len).fill(null).map((_, i) => ({ type: active[i] || '', date: '', time: '', note: '' }));
+  return Array(len).fill(null).map((_, i) => ({ type: active[i]||'', date:'', time:'', note:'' }));
 }
 
 const DEFAULT_DATA = {
   companies: [
-    { id: 'loopn', name: 'Loop N', color: '#6366f1', colorBev: '#6366f1', colorOp: '#f59e0b' },
-    { id: 'loops', name: 'Loop S', color: '#10b981', colorBev: '#10b981', colorOp: '#f59e0b' }
+    { id:'loopn', name:'Loop N', color:'#6366f1' },
+    { id:'loops', name:'Loop S', color:'#10b981' }
   ],
+  years: [2026, 2027],
+  activityTypes: [],   // custom types added by user
   plan: {
     2026: {
-      loopn: makeRow(12, { 5: 'bev', 8: 'op' }),
-      loops: makeRow(12, { 7: 'bev' })
+      loopn: makeRow(12, {5:'bev', 8:'op'}),
+      loops: makeRow(12, {7:'bev'})
     },
     2027: {
-      loopn: makeRow(12, { 1:'bev', 4:'bev', 7:'bev', 10:'bev' }),
-      loops: makeRow(12, { 0:'bev', 3:'bev', 6:'bev', 9:'bev' })
+      loopn: makeRow(12, {1:'bev',4:'bev',7:'bev',10:'bev'}),
+      loops: makeRow(12, {0:'bev',3:'bev',6:'bev',9:'bev'})
     }
-  }
+  },
+  // Per-company color overrides per activity type: companyColors[companyId][typeId] = color
+  companyColors: {}
 };
 
 // ── State ────────────────────────────────────────────────────────
@@ -344,29 +387,24 @@ let state     = JSON.parse(JSON.stringify(DEFAULT_DATA));
 let dragSrc   = null;
 let panelCtx  = null;
 let panelType = '';
-let isSyncing = false; // prevent echo when we wrote the change
+let isSyncing = false;
+let editActId = null;
+let selectedCompanyColor = COLORS[0];
+let selectedActColor     = COLORS[4];
+let selectedEditActColor = COLORS[4];
 
 function setSyncStatus(s) {
   const el = document.getElementById('syncStatus');
   el.className = s;
-  el.textContent = s === 'synced' ? '✅ Synkroniseret' :
-                   s === 'saving' ? '💾 Gemmer…' :
-                   s === 'offline'? '❌ Offline' :
-                                    '⏳ Indlæser…';
+  el.textContent = s==='synced'?'✅ Synkroniseret': s==='saving'?'💾 Gemmer…': s==='offline'?'❌ Offline':'⏳ Indlæser…';
 }
 
-// ── Firebase sync ────────────────────────────────────────────────
-// Listen for remote changes
-onValue(planRef, snapshot => {
-  if (isSyncing) return; // skip echo from our own write
-  const data = snapshot.val();
-  if (data) {
-    state = data;
-    ensureRows();
-  } else {
-    // First time — push defaults
-    saveToFirebase();
-  }
+// ── Firebase ─────────────────────────────────────────────────────
+onValue(planRef, snap => {
+  if (isSyncing) return;
+  const data = snap.val();
+  if (data) { state = data; migrateState(); }
+  else saveToFirebase();
   setSyncStatus('synced');
   render();
 });
@@ -375,59 +413,73 @@ function saveToFirebase() {
   isSyncing = true;
   setSyncStatus('saving');
   set(planRef, state)
-    .then(() => { setSyncStatus('synced'); })
-    .catch(() => { setSyncStatus('offline'); })
-    .finally(() => { setTimeout(() => { isSyncing = false; }, 300); });
+    .then(()  => setSyncStatus('synced'))
+    .catch(() => setSyncStatus('offline'))
+    .finally(()=> setTimeout(()=>{ isSyncing=false; }, 400));
 }
 
-function resetData() {
-  if (!confirm('Nulstil planen til standard? Dette påvirker alle der har linket.')) return;
-  state = JSON.parse(JSON.stringify(DEFAULT_DATA));
-  saveToFirebase();
-  render();
-}
-
-// ── Helpers ──────────────────────────────────────────────────────
-function ensureRows() {
-  [2026, 2027].forEach(y => {
+// Ensure new fields exist on loaded data
+function migrateState() {
+  if (!state.years)         state.years = [2026,2027];
+  if (!state.activityTypes) state.activityTypes = [];
+  if (!state.companyColors) state.companyColors = {};
+  state.years.forEach(y => {
     if (!state.plan[y]) state.plan[y] = {};
     state.companies.forEach(c => {
-      if (!state.plan[y][c.id]) state.plan[y][c.id] = makeRow(12, {});
-      if (!c.colorBev) c.colorBev = c.color;
-      if (!c.colorOp)  c.colorOp  = '#f59e0b';
+      if (!state.plan[y][c.id]) state.plan[y][c.id] = makeRow(12,{});
     });
   });
 }
 
-function getEntry(year, cid, mi) {
-  const e = state.plan[year]?.[cid]?.[mi];
-  if (!e) return { type:'', date:'', time:'', note:'' };
-  if (typeof e === 'string') return { type: e, date:'', time:'', note:'' };
-  return { type: e.type||'', date: e.date||'', time: e.time||'', note: e.note||'' };
+window.resetData = function() {
+  if (!confirm('Nulstil planen til standard? Dette påvirker alle der har linket.')) return;
+  state = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  saveToFirebase(); render();
+};
+
+// ── All activity types (builtin + custom) ────────────────────────
+function allTypes() {
+  return [...BUILTIN_TYPES, ...(state.activityTypes||[])];
+}
+function getTypeById(id) { return allTypes().find(t => t.id === id); }
+
+// Get effective color for a type+company combo
+function typeColor(typeId, companyId) {
+  return state.companyColors?.[companyId]?.[typeId]
+    || getTypeById(typeId)?.color
+    || '#888';
 }
 
-function getCompany(id) { return state.companies.find(c => c.id === id); }
-
+// ── Helpers ──────────────────────────────────────────────────────
+function getEntry(year, cid, mi) {
+  const e = state.plan[year]?.[cid]?.[mi];
+  if (!e) return {type:'',date:'',time:'',note:''};
+  if (typeof e==='string') return {type:e,date:'',time:'',note:''};
+  return {type:e.type||'',date:e.date||'',time:e.time||'',note:e.note||''};
+}
+function getCompany(id) { return state.companies.find(c=>c.id===id); }
 function formatDateShort(d) {
   if (!d) return '';
-  const dt = new Date(d + 'T00:00:00');
-  return dt.getDate() + '/' + (dt.getMonth() + 1);
+  const dt = new Date(d+'T00:00:00');
+  return dt.getDate()+'/'+(dt.getMonth()+1);
 }
 
 // ── Render ───────────────────────────────────────────────────────
 function render() {
-  ensureRows();
+  migrateState();
   const container = document.getElementById('plan');
   container.innerHTML = '';
 
-  [2026, 2027].forEach((year, yi) => {
-    if (yi > 0) { const hr = document.createElement('hr'); container.appendChild(hr); }
+  const years = [...(state.years||[2026,2027])].sort((a,b)=>a-b);
 
+  years.forEach((year, yi) => {
+    if (yi > 0) { const hr=document.createElement('hr'); container.appendChild(hr); }
     const block = document.createElement('div');
     block.className = 'year-block';
+
     const yh = document.createElement('div');
     yh.className = 'year-header';
-    yh.textContent = year === 2027 ? '2027 — Rullende besøg' : '2026';
+    yh.innerHTML = `${year} <button class="del-year-btn" title="Fjern år" onclick="window._deleteYear(${year})">✕</button>`;
     block.appendChild(yh);
 
     const table = document.createElement('table');
@@ -443,56 +495,50 @@ function render() {
     state.companies.forEach(company => {
       const tr = document.createElement('tr');
       tr.className = 'company-row';
-
       const tdLabel = document.createElement('td');
       tdLabel.className = 'label-cell';
+      const dotColor = typeColor('bev', company.id) || company.color;
       tdLabel.innerHTML = `
         <div class="company-name">
-          <div class="color-dot" style="background:${company.colorBev||company.color}"></div>
+          <div class="color-dot" style="background:${dotColor}"></div>
           <span title="Klik for at omdøbe" onclick="window._renameCompany('${company.id}')">${company.name}</span>
           <button class="del-btn" onclick="window._deleteCompany('${company.id}')">×</button>
         </div>`;
       tr.appendChild(tdLabel);
 
-      for (let mi = 0; mi < 12; mi++) {
+      for (let mi=0; mi<12; mi++) {
         const entry = getEntry(year, company.id, mi);
         const td = document.createElement('td');
         const cell = document.createElement('div');
-        cell.className = 'month-cell' + (entry.type ? ' has-type' : '') + (entry.note ? ' has-note' : '');
+        cell.className = 'month-cell'+(entry.type?' has-type':'')+(entry.note?' has-note':'');
         cell.dataset.type    = entry.type;
         cell.dataset.company = company.id;
         cell.dataset.year    = year;
         cell.dataset.month   = mi;
 
         if (entry.type) {
-          const col = entry.type === 'bev'
-            ? (company.colorBev || company.color)
-            : (company.colorOp  || '#f59e0b');
-          cell.style.background = `linear-gradient(135deg, ${col}99, ${col})`;
-
+          const col = typeColor(entry.type, company.id);
+          cell.style.background = `linear-gradient(135deg,${col}99,${col})`;
           const lbl = document.createElement('div');
           lbl.className = 'cell-label';
-          lbl.textContent = TYPE_SHORT[entry.type];
+          lbl.textContent = getTypeById(entry.type)?.name || entry.type;
           cell.appendChild(lbl);
 
-          if (entry.date || entry.time) {
+          if (entry.date||entry.time) {
             const dt = document.createElement('div');
             dt.className = 'cell-date';
-            dt.textContent = [entry.date ? formatDateShort(entry.date) : '', entry.time || ''].filter(Boolean).join(' ');
+            dt.textContent = [entry.date?formatDateShort(entry.date):'', entry.time||''].filter(Boolean).join(' ');
             cell.appendChild(dt);
           }
-
           if (entry.note) {
-            const noteEl = document.createElement('div');
-            noteEl.className = 'cell-note';
-            noteEl.textContent = entry.note;
-            cell.appendChild(noteEl);
+            const ne = document.createElement('div');
+            ne.className = 'cell-note';
+            ne.textContent = entry.note;
+            cell.appendChild(ne);
           }
-
           cell.draggable = true;
           cell.addEventListener('dragstart', onDragStart);
         }
-
         if (entry.note) cell.title = entry.note;
         cell.addEventListener('click', openPanel);
         cell.addEventListener('dragover',  onDragOver);
@@ -508,118 +554,155 @@ function render() {
     block.appendChild(table);
     container.appendChild(block);
   });
+
+  renderLegend();
+}
+
+function renderLegend() {
+  const leg = document.getElementById('legend');
+  leg.innerHTML = '';
+  allTypes().forEach(t => {
+    const li = document.createElement('div'); li.className='li';
+    li.innerHTML = `<div class="ld" style="background:${t.color}"></div> ${t.name}`;
+    leg.appendChild(li);
+  });
+  const empty = document.createElement('div'); empty.className='li';
+  empty.innerHTML = `<div class="ld" style="background:#e4e7ee;border:1px solid #ccc"></div> Ingen aktivitet`;
+  leg.appendChild(empty);
 }
 
 // ── Detail panel ─────────────────────────────────────────────────
 function openPanel(e) {
-  const cell    = e.currentTarget;
-  const year    = parseInt(cell.dataset.year);
-  const cid     = cell.dataset.company;
-  const mi      = parseInt(cell.dataset.month);
+  const cell = e.currentTarget;
+  const year = parseInt(cell.dataset.year);
+  const cid  = cell.dataset.company;
+  const mi   = parseInt(cell.dataset.month);
   const company = getCompany(cid);
   const entry   = getEntry(year, cid, mi);
 
-  panelCtx  = { year, cid, mi };
+  panelCtx  = {year, cid, mi};
   panelType = entry.type;
 
   document.getElementById('panelTitle').textContent = company.name;
-  const mName = MONTHS_DK[mi].charAt(0).toUpperCase() + MONTHS_DK[mi].slice(1);
+  const mName = MONTHS_DK[mi].charAt(0).toUpperCase()+MONTHS_DK[mi].slice(1);
   document.getElementById('panelContext').innerHTML =
-    `<strong>${mName} ${year}</strong><br>` +
+    `<strong>${mName} ${year}</strong><br>`+
     (entry.type
-      ? 'Aktivitet: ' + (entry.type === 'bev' ? 'Bevægeligheds-konsultation' : 'Oplæg') +
-        (entry.date ? '<br>Dato: ' + formatDateShort(entry.date) : '')
+      ? 'Aktivitet: '+(getTypeById(entry.type)?.name||entry.type)+
+        (entry.date?'<br>Dato: '+formatDateShort(entry.date):'')
       : 'Ingen aktivitet sat endnu');
 
-  const pad = n => String(n).padStart(2, '0');
-  const lastDay = new Date(year, mi + 1, 0).getDate();
+  // Date inputs
+  const pad = n=>String(n).padStart(2,'0');
+  const lastDay = new Date(year, mi+1, 0).getDate();
   const di = document.getElementById('panelDate');
-  di.min   = `${year}-${pad(mi + 1)}-01`;
-  di.max   = `${year}-${pad(mi + 1)}-${pad(lastDay)}`;
-  di.value = entry.date || '';
-  document.getElementById('panelTime').value = entry.time || '';
-  document.getElementById('panelNote').value = entry.note || '';
+  di.min=`${year}-${pad(mi+1)}-01`; di.max=`${year}-${pad(mi+1)}-${pad(lastDay)}`;
+  di.value = entry.date||'';
+  document.getElementById('panelTime').value = entry.time||'';
+  document.getElementById('panelNote').value = entry.note||'';
 
-  const bevCol = company.colorBev || company.color;
-  const opCol  = company.colorOp  || '#f59e0b';
-  document.getElementById('colorPickBev').value          = bevCol;
-  document.getElementById('colorPickOp').value           = opCol;
-  document.getElementById('previewBev').style.background = bevCol;
-  document.getElementById('previewOp').style.background  = opCol;
+  // Build activity type buttons dynamically
+  const typeBtns = document.getElementById('typeBtns');
+  typeBtns.innerHTML = '';
+  allTypes().forEach(t => {
+    const col = typeColor(t.id, cid);
+    const btn = document.createElement('div');
+    btn.className = 'type-btn'+(panelType===t.id?' selected':'');
+    btn.dataset.tid = t.id;
+    btn.innerHTML = `<div class="tbdot" style="background:${col}"></div>${t.name}`;
+    btn.onclick = () => {
+      panelType = t.id;
+      document.querySelectorAll('#typeBtns .type-btn').forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+      updateDateSection(true);
+    };
+    typeBtns.appendChild(btn);
+  });
+  // Empty option
+  const emptyBtn = document.createElement('div');
+  emptyBtn.className = 'type-btn'+(panelType===''?' selected':'');
+  emptyBtn.innerHTML = `<div class="tbdot tbdot-empty"></div>Tom (ingen aktivitet)`;
+  emptyBtn.onclick = () => {
+    panelType = '';
+    document.querySelectorAll('#typeBtns .type-btn').forEach(b=>b.classList.remove('selected'));
+    emptyBtn.classList.add('selected');
+    updateDateSection(false);
+  };
+  typeBtns.appendChild(emptyBtn);
 
-  updateTypeButtons(entry.type);
+  // Build color rows for all types
+  const colorRows = document.getElementById('colorRows');
+  colorRows.innerHTML = '';
+  allTypes().forEach(t => {
+    const col = typeColor(t.id, cid);
+    const row = document.createElement('div');
+    row.className = 'color-row';
+    row.innerHTML = `
+      <div class="color-row-dot" id="prevDot_${t.id}" style="background:${col}"></div>
+      <span>${t.name}</span>
+      <input type="color" id="colorPick_${t.id}" value="${col}">`;
+    row.querySelector('input').addEventListener('input', ev => {
+      document.getElementById(`prevDot_${t.id}`).style.background = ev.target.value;
+      // also update the dot in the type button
+      const btn = typeBtns.querySelector(`[data-tid="${t.id}"] .tbdot`);
+      if (btn) btn.style.background = ev.target.value;
+    });
+    colorRows.appendChild(row);
+  });
+
+  updateDateSection(!!entry.type);
   document.getElementById('detailPanel').classList.add('visible');
   e.stopPropagation();
 }
 
-function updateTypeButtons(type) {
-  panelType = type;
-  document.getElementById('tbBev').classList.toggle('selected',   type === 'bev');
-  document.getElementById('tbOp').classList.toggle('selected',    type === 'op');
-  document.getElementById('tbEmpty').classList.toggle('selected', type === '');
-  document.getElementById('dotBev').style.background = document.getElementById('colorPickBev').value;
-  document.getElementById('dotOp').style.background  = document.getElementById('colorPickOp').value;
+function updateDateSection(show) {
   const ds = document.getElementById('dateSection');
-  ds.style.opacity       = type ? '1' : '0.35';
-  ds.style.pointerEvents = type ? '' : 'none';
+  ds.style.opacity       = show ? '1' : '0.35';
+  ds.style.pointerEvents = show ? '' : 'none';
 }
 
-window._selectType = function(type) { updateTypeButtons(type); };
-
-function savePanel() {
+window.savePanel = function() {
   if (!panelCtx) return;
-  const { year, cid, mi } = panelCtx;
+  const {year,cid,mi} = panelCtx;
   state.plan[year][cid][mi] = {
     type: panelType,
     date: panelType ? document.getElementById('panelDate').value : '',
     time: panelType ? document.getElementById('panelTime').value : '',
     note: document.getElementById('panelNote').value.trim()
   };
-  const comp = getCompany(cid);
-  if (comp) {
-    comp.colorBev = document.getElementById('colorPickBev').value;
-    comp.colorOp  = document.getElementById('colorPickOp').value;
-    comp.color    = comp.colorBev;
-  }
-  saveToFirebase();
-  render();
-  closePanel();
-}
+  // Save color overrides
+  if (!state.companyColors) state.companyColors = {};
+  if (!state.companyColors[cid]) state.companyColors[cid] = {};
+  allTypes().forEach(t => {
+    const inp = document.getElementById(`colorPick_${t.id}`);
+    if (inp) state.companyColors[cid][t.id] = inp.value;
+  });
+  saveToFirebase(); render(); closePanel();
+};
 
-function deleteEntry() {
+window.deleteEntry = function() {
   if (!panelCtx) return;
-  const { year, cid, mi } = panelCtx;
-  state.plan[year][cid][mi] = { type:'', date:'', time:'', note:'' };
-  saveToFirebase();
-  render();
-  closePanel();
-}
+  const {year,cid,mi} = panelCtx;
+  state.plan[year][cid][mi] = {type:'',date:'',time:'',note:''};
+  saveToFirebase(); render(); closePanel();
+};
 
-function closePanel() {
+window.closePanel = function() {
   document.getElementById('detailPanel').classList.remove('visible');
   panelCtx = null;
-}
+};
 
 document.addEventListener('click', e => {
   const panel = document.getElementById('detailPanel');
-  if (panel.classList.contains('visible') && !panel.contains(e.target)) closePanel();
+  if (panel.classList.contains('visible') && !panel.contains(e.target)) window.closePanel();
 });
-document.getElementById('detailPanel').addEventListener('click', e => e.stopPropagation());
-
-document.getElementById('colorPickBev').addEventListener('input', e => {
-  document.getElementById('previewBev').style.background = e.target.value;
-  document.getElementById('dotBev').style.background     = e.target.value;
-});
-document.getElementById('colorPickOp').addEventListener('input', e => {
-  document.getElementById('previewOp').style.background = e.target.value;
-  document.getElementById('dotOp').style.background     = e.target.value;
-});
+document.getElementById('detailPanel').addEventListener('click', e=>e.stopPropagation());
 
 // ── Drag & drop ──────────────────────────────────────────────────
 function onDragStart(e) {
-  const c = e.currentTarget;
-  dragSrc = { company: c.dataset.company, year: parseInt(c.dataset.year), month: parseInt(c.dataset.month) };
-  e.dataTransfer.effectAllowed = 'move';
+  const c=e.currentTarget;
+  dragSrc={company:c.dataset.company,year:parseInt(c.dataset.year),month:parseInt(c.dataset.month)};
+  e.dataTransfer.effectAllowed='move';
 }
 function onDragOver(e)  { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
 function onDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
@@ -627,77 +710,160 @@ function onDrop(e) {
   e.preventDefault(); e.stopPropagation();
   e.currentTarget.classList.remove('drag-over');
   if (!dragSrc) return;
-  const t = e.currentTarget;
-  const tY = parseInt(t.dataset.year);
-  if (dragSrc.year !== tY) { dragSrc = null; return; }
-  const src = JSON.parse(JSON.stringify(getEntry(dragSrc.year, dragSrc.company, dragSrc.month)));
-  const tgt = JSON.parse(JSON.stringify(getEntry(tY, t.dataset.company, parseInt(t.dataset.month))));
-  state.plan[dragSrc.year][dragSrc.company][dragSrc.month] = tgt;
-  state.plan[tY][t.dataset.company][parseInt(t.dataset.month)] = src;
-  dragSrc = null;
-  saveToFirebase();
-  render();
+  const t=e.currentTarget;
+  const tY=parseInt(t.dataset.year);
+  if (dragSrc.year!==tY) { dragSrc=null; return; }
+  const src=JSON.parse(JSON.stringify(getEntry(dragSrc.year,dragSrc.company,dragSrc.month)));
+  const tgt=JSON.parse(JSON.stringify(getEntry(tY,t.dataset.company,parseInt(t.dataset.month))));
+  state.plan[dragSrc.year][dragSrc.company][dragSrc.month]=tgt;
+  state.plan[tY][t.dataset.company][parseInt(t.dataset.month)]=src;
+  dragSrc=null; saveToFirebase(); render();
 }
 
 // ── Company management ───────────────────────────────────────────
-let selectedColor = COLORS[0];
-
-window._showAddModal = function() {
-  const picks = document.getElementById('colorPicks');
-  picks.innerHTML = '';
-  const used = state.companies.map(c => c.color);
-  selectedColor = COLORS.find(c => !used.includes(c)) || COLORS[0];
+function buildColorPicks(containerId, selectedRef, setFn) {
+  const el = document.getElementById(containerId);
+  el.innerHTML='';
   COLORS.forEach(c => {
-    const div = document.createElement('div');
-    div.className = 'color-pick' + (c === selectedColor ? ' selected' : '');
-    div.style.background = c;
-    div.onclick = () => {
-      selectedColor = c;
-      document.querySelectorAll('.color-pick').forEach(el => el.classList.remove('selected'));
+    const div=document.createElement('div');
+    div.className='color-pick'+(c===selectedRef?' selected':'');
+    div.style.background=c;
+    div.onclick=()=>{
+      setFn(c);
+      el.querySelectorAll('.color-pick').forEach(x=>x.classList.remove('selected'));
       div.classList.add('selected');
     };
-    picks.appendChild(div);
+    el.appendChild(div);
   });
-  document.getElementById('newName').value = '';
-  document.getElementById('modal').classList.add('visible');
-  setTimeout(() => document.getElementById('newName').focus(), 100);
-};
+}
 
-window._hideModal    = function() { document.getElementById('modal').classList.remove('visible'); };
-window._confirmAdd   = function() {
-  const name = document.getElementById('newName').value.trim();
-  if (!name) { document.getElementById('newName').focus(); return; }
-  const id = 'c_' + Date.now();
-  state.companies.push({ id, name, color: selectedColor, colorBev: selectedColor, colorOp: '#f59e0b' });
-  ensureRows(); saveToFirebase(); render();
-  window._hideModal();
+window.showAddCompanyModal = function() {
+  selectedCompanyColor = COLORS.find(c=>!state.companies.map(x=>x.color).includes(c))||COLORS[0];
+  buildColorPicks('companyColorPicks', selectedCompanyColor, v=>{ selectedCompanyColor=v; });
+  document.getElementById('newCompanyName').value='';
+  document.getElementById('modalCompany').classList.add('visible');
+  setTimeout(()=>document.getElementById('newCompanyName').focus(),100);
+};
+window.confirmAddCompany = function() {
+  const name=document.getElementById('newCompanyName').value.trim();
+  if (!name) { document.getElementById('newCompanyName').focus(); return; }
+  const id='c_'+Date.now();
+  state.companies.push({id,name,color:selectedCompanyColor});
+  migrateState(); saveToFirebase(); render(); hideModal('modalCompany');
 };
 window._deleteCompany = function(id) {
-  if (state.companies.length <= 1) { alert('Du skal have mindst én virksomhed.'); return; }
-  const c = getCompany(id);
+  if (state.companies.length<=1) { alert('Du skal have mindst én virksomhed.'); return; }
+  const c=getCompany(id);
   if (!confirm(`Fjern "${c.name}" fra planen?`)) return;
-  state.companies = state.companies.filter(x => x.id !== id);
+  state.companies=state.companies.filter(x=>x.id!==id);
   saveToFirebase(); render();
 };
 window._renameCompany = function(id) {
-  const c = getCompany(id);
-  const n = prompt('Nyt navn:', c.name);
-  if (n && n.trim()) { c.name = n.trim(); saveToFirebase(); render(); }
+  const c=getCompany(id);
+  const n=prompt('Nyt navn:',c.name);
+  if (n&&n.trim()) { c.name=n.trim(); saveToFirebase(); render(); }
 };
 
-// Expose functions called from HTML attributes
-window.showAddModal = window._showAddModal;
-window.hideModal    = window._hideModal;
-window.confirmAdd   = window._confirmAdd;
-window.resetData    = resetData;
-window.savePanel    = savePanel;
-window.deleteEntry  = deleteEntry;
-window.closePanel   = closePanel;
-window.selectType   = window._selectType;
+// ── Year management ──────────────────────────────────────────────
+window.showAddYearModal = function() {
+  const nextYear = Math.max(...(state.years||[2027]))+1;
+  document.getElementById('newYear').value = nextYear;
+  document.getElementById('modalYear').classList.add('visible');
+  setTimeout(()=>document.getElementById('newYear').focus(),100);
+};
+window.confirmAddYear = function() {
+  const y=parseInt(document.getElementById('newYear').value);
+  if (!y||y<2024||y>2040) { alert('Angiv et gyldigt år mellem 2024 og 2040.'); return; }
+  if ((state.years||[]).includes(y)) { alert('Det år findes allerede.'); return; }
+  if (!state.years) state.years=[];
+  state.years.push(y);
+  migrateState(); saveToFirebase(); render(); hideModal('modalYear');
+};
+window._deleteYear = function(y) {
+  if ((state.years||[]).length<=1) { alert('Du skal have mindst ét år.'); return; }
+  if (!confirm(`Fjern hele ${y} fra planen? Alle data for det år slettes.`)) return;
+  state.years=state.years.filter(x=>x!==y);
+  delete state.plan[y];
+  saveToFirebase(); render();
+};
 
-document.getElementById('modal').addEventListener('click', e => {
-  if (e.target === document.getElementById('modal')) window._hideModal();
+// ── Activity type management ─────────────────────────────────────
+window.showManageActivitiesModal = function() {
+  selectedActColor = COLORS[4];
+  buildColorPicks('actColorPicks', selectedActColor, v=>{ selectedActColor=v; });
+  document.getElementById('newActName').value='';
+  renderActList();
+  document.getElementById('modalActivities').classList.add('visible');
+};
+
+function renderActList() {
+  const list=document.getElementById('actList');
+  list.innerHTML='';
+  allTypes().forEach(t => {
+    const item=document.createElement('div'); item.className='act-item';
+    item.innerHTML=`
+      <div class="act-dot" style="background:${t.color}"></div>
+      <span class="act-name">${t.name}</span>
+      ${t.builtin
+        ? '<span class="act-builtin">standard</span>'
+        : `<button class="act-edit" onclick="window._editActivity('${t.id}')">Rediger</button>
+           <button class="act-del"  onclick="window._deleteActivity('${t.id}')">×</button>`}`;
+    list.appendChild(item);
+  });
+}
+
+window.confirmAddActivity = function() {
+  const name=document.getElementById('newActName').value.trim();
+  if (!name) { document.getElementById('newActName').focus(); return; }
+  if (!state.activityTypes) state.activityTypes=[];
+  const id='act_'+Date.now();
+  state.activityTypes.push({id, name, color:selectedActColor, builtin:false});
+  saveToFirebase(); render(); renderActList();
+  document.getElementById('newActName').value='';
+};
+
+window._deleteActivity = function(id) {
+  if (!confirm('Slet denne aktivitetstype? Eksisterende celler med denne type ryddes.')) return;
+  state.activityTypes=state.activityTypes.filter(t=>t.id!==id);
+  // clear cells using this type
+  Object.keys(state.plan).forEach(y => {
+    Object.keys(state.plan[y]).forEach(cid => {
+      state.plan[y][cid].forEach((e,i) => {
+        if (e&&e.type===id) state.plan[y][cid][i]={type:'',date:'',time:'',note:''};
+      });
+    });
+  });
+  saveToFirebase(); render(); renderActList();
+};
+
+window._editActivity = function(id) {
+  editActId=id;
+  const t=getTypeById(id);
+  selectedEditActColor=t.color;
+  document.getElementById('editActName').value=t.name;
+  buildColorPicks('editActColorPicks', selectedEditActColor, v=>{ selectedEditActColor=v; });
+  document.getElementById('modalEditAct').classList.add('visible');
+};
+window.confirmEditActivity = function() {
+  const name=document.getElementById('editActName').value.trim();
+  if (!name) return;
+  const t=state.activityTypes.find(x=>x.id===editActId);
+  if (t) { t.name=name; t.color=selectedEditActColor; }
+  saveToFirebase(); render(); renderActList();
+  hideModal('modalEditAct');
+};
+
+// ── Modal helpers ────────────────────────────────────────────────
+window.hideModal = function(id) { document.getElementById(id).classList.remove('visible'); };
+['modalCompany','modalYear','modalActivities','modalEditAct'].forEach(id => {
+  document.getElementById(id).addEventListener('click', e => {
+    if (e.target===document.getElementById(id)) window.hideModal(id);
+  });
 });
+document.getElementById('newCompanyName').addEventListener('keydown', e=>{ if(e.key==='Enter') window.confirmAddCompany(); });
+document.getElementById('newYear').addEventListener('keydown',        e=>{ if(e.key==='Enter') window.confirmAddYear(); });
+document.getElementById('newActName').addEventListener('keydown',     e=>{ if(e.key==='Enter') window.confirmAddActivity(); });
+document.getElementById('editActName').addEventListener('keydown',    e=>{ if(e.key==='Enter') window.confirmEditActivity(); });
 
 </script>
 </body>
